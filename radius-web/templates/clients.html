@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card">
+  <h2>添加设备（交换机 / AC / AP）</h2>
+  <form method="post" action="{{ url_for('clients_add') }}">
+    <div class="grid">
+      <div><label>设备名称</label><input type="text" name="name" required
+        placeholder="huawei-ac-1 或 sw-floor3"></div>
+      <div><label>IP 或网段</label><input type="text" name="ipaddr" required
+        placeholder="10.10.28.171 或 10.10.0.0/16"></div>
+      <div><label>共享密钥（留空 = 自动生成独立随机密钥）</label><input type="text" name="secret"
+        placeholder="留空自动生成，或填 8~64 位自定义值"></div>
+    </div>
+    <div style="margin-top:14px;"><button class="btn">添加</button></div>
+    <p class="muted" style="margin-top:8px;">一台设备一条记录、一把独立密钥；自动附带 require_message_authenticator = no
+      （FreeRADIUS 3.2 兼容华为设备必需）和 nas_type = other。添加后把生成的密钥填到该设备的
+      radius-server shared-key。</p>
+  </form>
+</div>
+
+<div class="card">
+  <h2>设备密钥列表（{{ clients|length }}）</h2>
+  <p class="muted" style="margin-bottom:10px;">每条记录 = 一把「设备 ↔ RADIUS」共享密钥。RADIUS 服务端本身没有独立密钥，
+    所有密钥都只存在这里（clients.conf）。localhost / testing123 是本机 radtest 自测用的普通客户端条目，非特殊密钥。</p>
+  <table>
+    <tr><th>名称</th><th>IP/网段</th><th>独立密钥</th><th>其他配置</th><th>操作</th></tr>
+    {% for c in clients %}
+    <tr>
+      <td><b>{{ c.name }}</b>{% if c.name=='localhost' %} <span class="muted">（本机自测）</span>{% endif %}</td>
+      <td>{{ c.fields.get('ipaddr','-') }}</td>
+      <td><code>{{ c.fields.get('secret','-') }}</code></td>
+      <td class="muted">{% for k,v in c.fields.items() if k not in ('ipaddr','secret') %}{{ k }}={{ v }}<br>{% endfor %}</td>
+      <td style="white-space:nowrap;">
+        <form class="inline" method="post" action="{{ url_for('clients_rotate', name=c.name) }}"
+              onsubmit="return confirm('为 {{ c.name }} 生成一把新密钥？旧密钥立即失效，需同步改到该设备侧。')">
+          <button class="btn sm gray" {{ 'disabled title="本机自测密钥固定 testing123"' if c.name=='localhost' }}>换密钥</button>
+        </form>
+        <form class="inline" method="post" action="{{ url_for('clients_delete', name=c.name) }}"
+              onsubmit="return confirm('确定删除 {{ c.name }}？删除后该设备将无法认证。')">
+          <button class="btn sm red" {{ 'disabled' if c.name=='localhost' }}>删除</button>
+        </form>
+      </td>
+    </tr>
+    {% endfor %}
+  </table>
+</div>
+{% endblock %}

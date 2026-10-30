@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% block title %}{{ portal_name }}{% endblock %}
+{% block wrap_class %}narrow{% endblock %}
+
+{% block content %}
+<div class="card">
+  <div class="brand">
+    <div class="brand-mark">Wi</div>
+    <div>
+      <h1>{{ portal_name }}</h1>
+      <p class="muted">
+        {% if ssid %}网络 {{ ssid }}{% else %}请使用企业账号登录{% endif %}
+      </p>
+    </div>
+  </div>
+
+  {% if online %}
+  <div class="notice ok">
+    当前设备已上线：<strong>{{ online.username }}</strong>
+    <span class="muted">（{{ online.started_at | ts }} 起）</span>
+    <form method="post" action="{{ url_for('logout') }}" class="inline">
+      <input type="hidden" name="userip" value="{{ userip }}">
+      <button class="link" type="submit">退出登录</button>
+    </form>
+  </div>
+  {% endif %}
+
+  {% if not userip %}
+  <div class="notice warn">
+    未能识别你的终端 IP。请断开 WiFi 后重新连接，或联系管理员检查 AC 的 URL 参数配置。
+  </div>
+  {% endif %}
+
+  {% if auth_mode in ('dingtalk', 'both') %}
+    {% if dingtalk_ready %}
+    <form method="get" action="{{ url_for('auth_dingtalk') }}">
+      <input type="hidden" name="userip" value="{{ userip }}">
+      <input type="hidden" name="ssid" value="{{ ssid }}">
+      <input type="hidden" name="mac" value="{{ mac }}">
+      <input type="hidden" name="redirect_url" value="{{ redirect_url }}">
+      <button class="primary dingtalk" type="submit">钉钉扫码登录</button>
+    </form>
+    <p class="hint" style="margin-top:12px">
+      打开钉钉扫一扫，或在钉钉里点「确认登录」，即可自动连接网络。<br>
+      不需要记密码，离职后自动失效。
+    </p>
+    {% else %}
+    <div class="notice warn">
+      钉钉登录尚未配置完成（管理员需在 config.yaml 填写 dingtalk 段），
+      请先用下方账号密码登录。
+    </div>
+    {% endif %}
+  {% endif %}
+
+  {% if auth_mode == 'both' %}
+  <div class="divider">或使用账号密码</div>
+  {% endif %}
+
+  {% if auth_mode in ('password', 'both') %}
+  <form method="post" action="{{ url_for('login') }}" autocomplete="off">
+    <input type="hidden" name="userip" value="{{ userip }}">
+    <input type="hidden" name="ssid" value="{{ ssid }}">
+    <input type="hidden" name="mac" value="{{ mac }}">
+    <input type="hidden" name="redirect_url" value="{{ redirect_url }}">
+
+    <label class="field">
+      <span>账号</span>
+      <input type="text" name="username" placeholder="工号或邮箱前缀" required
+             autocapitalize="off" autocorrect="off" spellcheck="false">
+    </label>
+
+    <label class="field">
+      <span>密码</span>
+      <input type="password" name="password" placeholder="登录密码" required>
+    </label>
+
+    <button class="primary" type="submit">连接网络</button>
+  </form>
+  {% endif %}
+
+  <p class="hint">
+    认证由企业统一账号验证，上网行为将按规定记录审计。
+    {% if userip %}<br>终端 IP：{{ userip }}{% endif %}
+  </p>
+</div>
+{% endblock %}

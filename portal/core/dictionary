@@ -1,0 +1,58 @@
+# 最小 RADIUS 字典（RFC 2865 / 2866 / 2868 / 5176 常用属性）
+# pyrad 解析该文件用于报文编解码，只保留本项目实际用到的属性
+
+ATTRIBUTE	User-Name			1	string
+ATTRIBUTE	User-Password			2	string	encrypt=1
+ATTRIBUTE	CHAP-Password			3	octets
+ATTRIBUTE	NAS-IP-Address			4	ipaddr
+ATTRIBUTE	NAS-Port			5	integer
+ATTRIBUTE	Service-Type			6	integer
+ATTRIBUTE	Framed-IP-Address		8	ipaddr
+ATTRIBUTE	Filter-Id			11	string
+ATTRIBUTE	Framed-MTU			12	integer
+ATTRIBUTE	State				24	octets
+ATTRIBUTE	Class				25	octets
+ATTRIBUTE	Session-Timeout			27	integer
+ATTRIBUTE	Idle-Timeout			28	integer
+ATTRIBUTE	Called-Station-Id		30	string
+ATTRIBUTE	Calling-Station-Id		31	string
+ATTRIBUTE	NAS-Identifier			32	string
+ATTRIBUTE	Proxy-State			33	octets
+ATTRIBUTE	Acct-Status-Type		40	integer
+ATTRIBUTE	Acct-Delay-Time			41	integer
+ATTRIBUTE	Acct-Input-Octets		42	integer
+ATTRIBUTE	Acct-Output-Octets		43	integer
+ATTRIBUTE	Acct-Session-Id			44	string
+ATTRIBUTE	Acct-Session-Time		46	integer
+ATTRIBUTE	Acct-Terminate-Cause		49	integer
+ATTRIBUTE	NAS-Port-Type			61	integer
+ATTRIBUTE	Tunnel-Type			64	integer
+ATTRIBUTE	Tunnel-Medium-Type		65	integer
+ATTRIBUTE	Acct-Input-Gigawords		52	integer
+ATTRIBUTE	Acct-Output-Gigawords		53	integer
+ATTRIBUTE	Event-Timestamp			55	date
+ATTRIBUTE	Acct-Interim-Interval		85	integer
+ATTRIBUTE	EAP-Message			79	octets
+ATTRIBUTE	Message-Authenticator		80	octets
+ATTRIBUTE	Tunnel-Private-Group-Id		81	string
+ATTRIBUTE	Error-Cause			101	integer
+
+VALUE	Service-Type		Login-User		1
+VALUE	Service-Type		Framed-User		2
+VALUE	Service-Type		Callback-Login-User	3
+VALUE	Service-Type		Authenticate-Only	8
+
+VALUE	Acct-Status-Type	Start			1
+VALUE	Acct-Status-Type	Stop			2
+VALUE	Acct-Status-Type	Interim-Update		3
+
+VALUE	Acct-Terminate-Cause	User-Request		1
+VALUE	Acct-Terminate-Cause	Idle-Timeout		4
+VALUE	Acct-Terminate-Cause	Session-Timeout		5
+VALUE	Acct-Terminate-Cause	Admin-Reset		6
+
+VALUE	Tunnel-Type		VLAN			13
+VALUE	Tunnel-Medium-Type	IEEE-802		6
+
+VALUE	Error-Cause		Session-Context-Not-Found	503
+VALUE	Error-Cause		Unsupported-Attribute		401

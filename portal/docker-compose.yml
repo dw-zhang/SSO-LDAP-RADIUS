@@ -1,0 +1,21 @@
+# 使用 host 网络：Portal 协议是 UDP 且 AC 需要直连本机 IP，
+# 走 bridge + NAT 会导致 AC 看到的源地址与预期不符，排障麻烦。
+services:
+  portal:
+    build: .
+    image: portal-server:latest
+    container_name: portal-server
+    restart: always
+    network_mode: host
+    environment:
+      - TZ=Asia/Shanghai
+    volumes:
+      - ./config.yaml:/app/config.yaml:ro
+      - ./data:/app/data
+      - ./templates:/app/templates:ro
+      - ./static:/app/static:ro
+    logging:
+      driver: json-file
+      options:
+        max-size: "20m"
+        max-file: "5"

@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card" style="max-width:640px;">
+  <h2>在线认证测试</h2>
+  <p class="muted" style="margin-bottom:10px;">模拟 NAS 向本机 RADIUS（{{ '127.0.0.1:1812' }}）发送 Access-Request。密钥默认用 localhost 通道的 testing123。</p>
+  <form method="post">
+    <div class="grid">
+      <div><label>用户名</label><input type="text" name="username" value="{{ d.username }}" required></div>
+      <div><label>密码</label><input type="text" name="password" value="{{ d.password }}" required></div>
+      <div><label>共享密钥</label><input type="text" name="secret" value="{{ d.secret }}"></div>
+    </div>
+    <div style="margin-top:14px;"><button class="btn">发送测试</button></div>
+  </form>
+
+  {% if result %}
+  <div style="margin-top:18px;padding:14px;border-radius:8px;
+              background:{{ '#dcfce7' if result.accept else '#fee2e2' }};">
+    <b style="font-size:16px;">{{ result.result }}</b>
+    {% if not result.ok %}<p class="muted" style="margin-top:6px;">请确认 RADIUS 容器在运行：docker compose ps</p>{% endif %}
+  </div>
+  {% if result.attrs %}
+  <h2 style="margin-top:16px;font-size:14px;">回包属性</h2>
+  <pre>{% for a,vals in result.attrs.items() %}{{ a }} = {{ vals|join(', ') }}
+{% endfor %}</pre>
+  {% endif %}
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block content %}
+<div style="max-width:380px;margin:80px auto;">
+  <div class="card">
+    <h2>SharkSSO RADIUS 管理面板</h2>
+    <form method="post">
+      <label>管理密码</label>
+      <input type="password" name="password" autofocus>
+      {% if error %}<p style="color:var(--red);margin-top:8px;">{{ error }}</p>{% endif %}
+      <div style="margin-top:14px;"><button class="btn" style="width:100%;">登录</button></div>
+    </form>
+  </div>
+</div>
+{% endblock %}

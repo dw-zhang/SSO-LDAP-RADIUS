@@ -1,0 +1,28 @@
+services:
+  radius-web:
+    build: .
+    image: sharksso-radius-web:latest
+    container_name: sharksso-radius-web
+    restart: always
+    network_mode: host          # host 网络以便直连本机 127.0.0.1:1812 做认证测试
+    environment:
+      RADDB: /data/raddb
+      LOGDIR: /data/logs
+      DICT_PATH: /app/dictionary
+      PORT: "8082"
+      # 管理面板登录密码，建议修改！
+      ADMIN_PASSWORD: "CHANGE_ME_PANEL_ADMIN_PW"
+      SECRET_KEY: "change-me-to-random-string"
+      LOCAL_SECRET: "testing123"
+      # 面板登录密码文件（在「密码」页修改后写入这里，优先于 ADMIN_PASSWORD）
+      ADMIN_PW_FILE: "/data/admin.pw"
+    volumes:
+      - ../raddb:/data/raddb
+      - ../logs:/data/logs
+      - ../.secret:/data/.secret
+      - ../.adminpw:/data/admin.pw
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"

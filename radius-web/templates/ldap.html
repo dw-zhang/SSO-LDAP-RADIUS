@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card">
+  <h2>LDAP 对接状态</h2>
+  <table style="max-width:720px">
+    <tr><th>模式</th><td>
+      {% if enabled %}<span class="pill g">已启用（RADIUS 认证走 LDAP）</span>
+      {% else %}<span class="pill r">未启用（本地 users 文件认证）</span>{% endif %}
+    </td></tr>
+    <tr><th>RADIUS 容器</th><td>
+      {% if container.running %}<span class="pill g">运行中</span>
+      {% else %}<span class="pill r">异常：{{ container.detail }}</span>{% endif %}
+    </td></tr>
+    <tr><th>站点文件</th><td>
+      {% if site_ok %}<span class="pill g">site-default 已含 LDAP 认证</span>
+      {% else %}<span class="pill r">site-default 缺少 LDAP 配置</span>{% endif %}
+    </td></tr>
+    <tr><th>参数完整性</th><td>
+      {% if incomplete %}<span class="pill r">待填写：{{ incomplete|join('、') }}（仍为 CHANGE_ME 占位）</span>
+      {% else %}<span class="pill g">完整</span>{% endif %}
+    </td></tr>
+  </table>
+  <p class="muted" style="margin-top:10px">
+    启用 = 在 docker-compose.yml 挂载 ldap-mod.conf 与 site-default 并重建 RADIUS 容器；
+    若启用后启动失败（LDAP 连不上），面板会<b>自动回滚</b>恢复本地认证，不会造成服务中断。
+    停用同理。</p>
+  <div style="margin-top:10px">
+    {% if enabled %}
+    <form class="inline" method="post" action="{{ url_for('ldap_toggle') }}">
+      <input type="hidden" name="action" value="disable">
+      <button class="btn gray" onclick="return confirm('确定停用 LDAP 模式？账号认证将切回本地 users 文件。')">停用 LDAP 模式</button>
+    </form>
+    {% else %}
+    <form class="inline" method="post" action="{{ url_for('ldap_toggle') }}">
+      <input type="hidden" name="action" value="enable">
+      <button class="btn green" {% if incomplete %}disabled title="先补全连接参数"{% endif %}>启用 LDAP 模式</button>
+    </form>
+    <span class="muted">{% if incomplete %}补全参数并测试通过后再启用{% endif %}</span>
+    {% endif %}
+  </div>
+</div>
+
+<div class="card">
+  <h2>连接参数</h2>
+  <p class="muted">对应服务器 <code>/opt/SharkSSO/radius/raddb/ldap-mod.conf</code> 中的关键行，保存只改这几行、其余注释原样保留，每次保存自动备份。
+     用户段查 <code>ou=people</code>、组段查 <code>ou=groups</code>（Go-Ldap-Admin 默认结构）。</p>
+  <form method="post" action="{{ url_for('ldap_save') }}">
+    <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(320px,1fr))">
+      <div>
+        <label>LDAP 服务器地址（server）</label>
+        <input type="text" name="server" value="{{ d.server }}" placeholder="ldap://10.10.28.171">
+        <label>管理员 DN（identity）</label>
+        <input type="text" name="identity" value="{{ d.identity }}" placeholder="cn=admin,dc=example,dc=com">
+        <label>管理员密码（password）</label>
+        <input type="text" name="password" value="{{ d.password }}" placeholder="管理员密码">
+        <label>基础 DN（base_dn）</label>
+        <input type="text" name="base_dn" value="{{ d.base_dn }}" placeholder="dc=example,dc=com">
+      </div>
+      <div>
+        <label>用户段 base_dn</label>
+        <input type="text" name="user_base_dn" value="{{ d.user_base_dn }}" placeholder="ou=people,${..base_dn}">
+        <label>用户过滤 filter</label>
+        <input type="text" name="user_filter" value="{{ d.user_filter }}" placeholder="(uid=用户名变量)">
+        <label>组段 base_dn</label>
+        <input type="text" name="group_base_dn" value="{{ d.group_base_dn }}" placeholder="ou=groups,${..base_dn}">
+        <label>组过滤 filter</label>
+        <input type="text" name="group_filter" value="{{ d.group_filter }}" placeholder="(objectClass=groupOfNames)">
+        <label>组成员属性（membership_attribute）</label>
+        <input type="text" name="membership_attribute" value="{{ d.membership_attribute }}" placeholder="memberOf">
+      </div>
+    </div>
+    <div style="margin-top:14px">
+      <button class="btn">保存参数</button>
+    </div>
+  </form>
+  <form method="post" action="{{ url_for('ldap_test') }}" style="margin-top:10px">
+    <button class="btn gray">测试连接（用当前表单上方已保存的值）</button>
+    <span class="muted">测试内容：TCP 连通 → 管理员 bind → base_dn 校验 → 拉取组列表（供 VLAN 映射参考）</span>
+  </form>
+</div>
+
+{% if probe %}
+<div class="card">
+  <h2>测试结果 {% if probe.ok %}<span class="pill g">全部通过</span>{% else %}<span class="pill r">存在失败项</span>{% endif %}</h2>
+  <table style="max-width:860px">
+    <tr><th>步骤</th><th>结果</th><th>详情</th></tr>
+    {% for name, ok, detail in probe.steps %}
+    <tr>
+      <td>{{ name }}</td>
+      <td>{% if ok %}<span class="pill g">通过</span>{% else %}<span class="pill r">失败</span>{% endif %}</td>
+      <td class="muted">{{ detail }}</td>
+    </tr>
+    {% endfor %}
+  </table>
+  {% if probe.groups is not none %}
+  <h2 style="margin-top:16px">组列表（{{ probe.groups|length }} 个）— 用于 users 组映射</h2>
+  {% if probe.groups %}
+  <p class="muted">把组名填到 <code>users</code> 的映射规则里（面板「配置文件」页可看原文），例如：</p>
+  <pre>DEFAULT Ldap-Group == "{{ probe.groups[0] }}"
+	Tunnel-Type = VLAN,
+	Tunnel-Medium-Type = IEEE-802,
+	Tunnel-Private-Group-Id = "20"</pre>
+  <p style="margin-top:8px">
+    {% for g in probe.groups %}<span class="pill v">{{ g }}</span> {% endfor %}
+  </p>
+  {% else %}<p class="muted">组段下没有搜到组对象，检查组段 base_dn / filter 是否与 Go-Ldap-Admin 的组结构一致。</p>{% endif %}
+  {% endif %}
+</div>
+{% endif %}
+
+<div class="card">
+  <h2>动态 VLAN 组映射（切换到 LDAP 后生效）</h2>
+  <p class="muted">以下规则在 <code>users</code> 文件末尾（当前为注释态）。启用 LDAP 后去掉注释、把组名改成测试结果里的实际组名即可：
+     张三在行政部组 → VLAN 10；李四在研发部组 → VLAN 20。之后人员变动只需在 Go-Ldap-Admin 里调整组。</p>
+  <pre>#DEFAULT Ldap-Group == "研发部"
+#	Tunnel-Type = VLAN,
+#	Tunnel-Medium-Type = IEEE-802,
+#	Tunnel-Private-Group-Id = "20"
+
+#DEFAULT Ldap-Group == "行政部"
+#	Tunnel-Type = VLAN,
+#	Tunnel-Medium-Type = IEEE-802,
+#	Tunnel-Private-Group-Id = "10"</pre>
+</div>
+{% endblock %}

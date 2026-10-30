@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card">
+  <h2>添加账号</h2>
+  <form method="post" action="{{ url_for('users_add') }}">
+    <div class="grid">
+      <div><label>用户名 / MAC 地址</label><input type="text" name="name" required
+        placeholder="zhangsan 或 00-11-22-33-44-55"></div>
+      <div><label>密码</label><input type="text" name="password" required
+        placeholder="MAC 认证时密码 = MAC 地址"></div>
+      <div><label>欢迎消息（可选）</label><input type="text" name="reply_message"
+        placeholder="Welcome from SharkSSO"></div>
+    </div>
+    <div style="margin-top:12px;">
+      <label style="display:inline-flex;align-items:center;gap:6px;color:var(--txt);">
+        <input type="checkbox" name="enable_vlan" style="width:auto;"> 启用动态 VLAN
+      </label>
+      <input type="number" name="vlan" placeholder="VLAN 号，如 100" style="width:160px;margin-left:8px;">
+      <span class="muted">（认证通过后端口划入该 VLAN；VLAN 需先在交换机上建好）</span>
+    </div>
+    <div style="margin-top:14px;"><button class="btn">添加</button></div>
+  </form>
+</div>
+
+<div class="card">
+  <h2>账号列表（{{ rows|length }}）</h2>
+  <table>
+    <tr><th>用户名</th><th>密码</th><th>动态 VLAN</th><th>回包属性</th><th>操作</th></tr>
+    {% for r in rows %}
+    <tr>
+      <td><b>{{ r.name }}</b></td>
+      <td>{{ r.password }}</td>
+      <td>{% if r.vlan %}<span class="pill v">VLAN {{ r.vlan }}</span>{% else %}<span class="muted">-</span>{% endif %}</td>
+      <td class="muted">{% for a,op,v in r.reply %}{{ a }} {{ op }} {{ v }}<br>{% endfor %}</td>
+      <td style="white-space:nowrap;">
+        <a class="btn sm gray" href="{{ url_for('users_edit', idx=r.idx) }}">编辑</a>
+        <form class="inline" method="post" action="{{ url_for('users_delete', idx=r.idx) }}"
+              onsubmit="return confirm('确定删除 {{ r.name }}？')">
+          <button class="btn sm red">删除</button>
+        </form>
+      </td>
+    </tr>
+    {% endfor %}
+  </table>
+</div>
+{% endblock %}

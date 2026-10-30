@@ -1,0 +1,20 @@
+ATTRIBUTE	User-Name		1	string
+ATTRIBUTE	User-Password		2	string
+ATTRIBUTE	Reply-Message		18	string
+ATTRIBUTE	NAS-IP-Address		4	ipaddr
+ATTRIBUTE	Framed-IP-Address	8	ipaddr
+ATTRIBUTE	Service-Type		6	integer
+ATTRIBUTE	Cleartext-Password	2 string has_tag
+ATTRIBUTE	Tunnel-Type		64	integer
+ATTRIBUTE	Tunnel-Medium-Type	65	integer
+ATTRIBUTE	Tunnel-Private-Group-Id	81	string has_tag
+ATTRIBUTE	Message-Authenticator	80	octets
+ATTRIBUTE	EAP-Message		79	string
+ATTRIBUTE	Acct-Status-Type	40	integer
+ATTRIBUTE	Error-Cause		101	integer
+
+VALUE	Tunnel-Type		VLAN		13
+VALUE	Tunnel-Medium-Type	IEEE-802	6
+VALUE	Service-Type		Framed-User	2
+VALUE	Acct-Status-Type	Start		1
+VALUE	Acct-Status-Type	Stop		2

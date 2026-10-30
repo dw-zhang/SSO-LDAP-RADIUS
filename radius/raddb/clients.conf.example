@@ -1,0 +1,13 @@
+# SharkSSO RADIUS 客户端（NAS）
+client localhost {
+    ipaddr = 127.0.0.1
+    secret = testing123
+    require_message_authenticator = no
+}
+
+client huawei-ac-4f-jf {
+    ipaddr = 172.16.1.253
+    secret = CHANGE_ME_DEVICE_SECRET
+    require_message_authenticator = no
+    nas_type = other
+}

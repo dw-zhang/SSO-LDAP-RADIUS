@@ -1,0 +1,65 @@
+services:
+  openldap:
+    image: osixia/openldap:1.5.0
+    container_name: sharksso-ldap
+    restart: always
+    ports:
+      - "389:389"
+      - "636:636"
+    environment:
+      LDAP_ORGANISATION: "SharkSSO"
+      LDAP_DOMAIN: "moying.ai"
+      LDAP_ADMIN_PASSWORD: "CHANGE_ME_LDAP_ADMIN_PW"
+      LDAP_CONFIG_PASSWORD: "CHANGE_ME_LDAP_ADMIN_PW"
+      LDAP_TLS: "true"
+    volumes:
+      - ./ldap/database:/var/lib/ldap
+      - ./ldap/config:/etc/ldap/slapd.d
+      - ./ldap/certs:/container/service/slapd/assets/certs
+    mem_limit: 512m
+    logging:
+      driver: json-file
+      options: {max-size: "20m", max-file: "3"}
+
+  mysql:
+    image: mysql:8.0
+    container_name: sharksso-ldap-mysql
+    restart: always
+    ports:
+      - "3307:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: "CHANGE_ME_MYSQL_ROOT_PW"
+      MYSQL_DATABASE: "go_ldap_admin"
+    command: >
+      --innodb-buffer-pool-size=256M
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_general_ci
+    volumes:
+      - ./mysql:/var/lib/mysql
+    mem_limit: 1g
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-pCHANGE_ME_MYSQL_ROOT_PW"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+    logging:
+      driver: json-file
+      options: {max-size: "20m", max-file: "3"}
+
+  go-ldap-admin:
+    image: eryajf/go-ldap-admin:latest
+    container_name: sharksso-ldap-admin
+    restart: always
+    ports:
+      - "8889:8888"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      openldap:
+        condition: service_started
+    volumes:
+      - ./config.yml:/app/config.yml
+    mem_limit: 512m
+    logging:
+      driver: json-file
+      options: {max-size: "20m", max-file: "3"}

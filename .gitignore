@@ -1,0 +1,20 @@
+# 密钥与凭据（永不入库）
+.secret
+.adminpw
+.secrets
+config.yaml
+!config.yaml.example
+*.key
+*.pem
+
+# 运行时产物
+logs/
+data/
+__pycache__/
+*.pyc
+*.bak*
+*.orig
+dept-list.tsv
+
+# 系统
+.DS_Store

@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SharkSSO RADIUS 管理面板</title>
+<style>
+:root { --bg:#f5f6f8; --card:#fff; --line:#e3e6ea; --txt:#1f2733; --muted:#68727f;
+        --blue:#2563eb; --green:#16a34a; --red:#dc2626; --amber:#d97706; }
+* { box-sizing:border-box; margin:0; padding:0; }
+body { font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;
+       background:var(--bg); color:var(--txt); font-size:14px; }
+nav { background:#111827; color:#e5e7eb; padding:0 20px; display:flex; align-items:center;
+      gap:4px; height:48px; }
+nav .brand { font-weight:700; margin-right:16px; color:#fff; }
+nav a { color:#9ca3af; text-decoration:none; padding:6px 12px; border-radius:6px; }
+nav a:hover { color:#fff; background:#1f2937; }
+nav a.on { color:#fff; background:#374151; }
+nav .right { margin-left:auto; }
+main { max-width:1080px; margin:24px auto; padding:0 16px; }
+.card { background:var(--card); border:1px solid var(--line); border-radius:10px;
+        padding:18px; margin-bottom:18px; }
+.card h2 { font-size:16px; margin-bottom:12px; }
+table { width:100%; border-collapse:collapse; }
+th,td { text-align:left; padding:8px 10px; border-bottom:1px solid var(--line); vertical-align:top; }
+th { color:var(--muted); font-weight:600; font-size:13px; white-space:nowrap; }
+.btn { display:inline-block; border:none; border-radius:6px; padding:7px 14px; cursor:pointer;
+       font-size:13px; background:var(--blue); color:#fff; text-decoration:none; }
+.btn:hover { opacity:.9; }
+.btn.gray { background:#6b7280; } .btn.red { background:var(--red); } .btn.green { background:var(--green); }
+.btn.sm { padding:4px 10px; font-size:12px; }
+form.inline { display:inline; }
+label { display:block; margin:10px 0 4px; color:var(--muted); font-size:13px; }
+input[type=text],input[type=password],input[type=number],select,textarea {
+  width:100%; padding:8px 10px; border:1px solid var(--line); border-radius:6px; font-size:14px; }
+.flash { padding:10px 14px; border-radius:8px; margin-bottom:14px; font-size:13px; }
+.flash.ok { background:#dcfce7; color:#14532d; }
+.flash.error { background:#fee2e2; color:#7f1d1d; }
+.flash.warn { background:#fef3c7; color:#78350f; }
+.pill { display:inline-block; padding:2px 10px; border-radius:99px; font-size:12px; }
+.pill.g { background:#dcfce7; color:#166534; } .pill.r { background:#fee2e2; color:#991b1b; }
+.pill.v { background:#dbeafe; color:#1e40af; }
+code,pre { font-family:"SF Mono",Menlo,Consolas,monospace; }
+pre { background:#0f172a; color:#e2e8f0; padding:14px; border-radius:8px; overflow-x:auto;
+      font-size:12.5px; line-height:1.6; }
+.muted { color:var(--muted); font-size:12.5px; }
+.grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:14px; }
+.kv .k { color:var(--muted); font-size:12px; } .kv .v { font-size:20px; font-weight:700; margin-top:2px; }
+</style>
+</head>
+<body>
+{% if session.get('authed') %}
+<nav>
+  <span class="brand">🦈 SharkSSO RADIUS</span>
+  <a href="{{ url_for('dashboard') }}" class="{{ 'on' if request.path=='/' }}">总览</a>
+  <a href="{{ url_for('users_page') }}" class="{{ 'on' if request.path.startswith('/users') }}">账号管理</a>
+  <a href="{{ url_for('clients_page') }}" class="{{ 'on' if request.path.startswith('/clients') }}">密钥管理</a>
+  <a href="{{ url_for('ldap_page') }}" class="{{ 'on' if request.path.startswith('/ldap') }}">LDAP 对接</a>
+  <a href="{{ url_for('vlan_page') }}" class="{{ 'on' if request.path.startswith('/vlan') }}">动态 VLAN</a>
+  <a href="{{ url_for('test_page') }}" class="{{ 'on' if request.path.startswith('/test') }}">认证测试</a>
+  <a href="{{ url_for('logs_page') }}" class="{{ 'on' if request.path.startswith('/logs') }}">日志</a>
+  <a href="{{ url_for('config_page') }}" class="{{ 'on' if request.path.startswith('/config') }}">配置文件</a>
+  <a href="{{ url_for('password_page') }}" class="{{ 'on' if request.path.startswith('/password') }}">密码</a>
+  <a href="{{ url_for('guide_page') }}" class="{{ 'on' if request.path.startswith('/guide') }}">对接指南</a>
+  <a href="{{ url_for('logout') }}" class="right">退出</a>
+</nav>
+{% endif %}
+<main>
+{% with msgs = get_flashed_messages(with_categories=true) %}
+  {% for cat, m in msgs %}<div class="flash {{ cat }}">{{ m }}</div>{% endfor %}
+{% endwith %}
+{% block content %}{% endblock %}
+</main>
+</body>
+</html>

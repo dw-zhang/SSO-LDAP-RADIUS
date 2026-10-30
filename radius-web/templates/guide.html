@@ -1,0 +1,182 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+.cmd{border:1px solid #d8d6cd;border-radius:8px;margin-top:12px;overflow:hidden}
+.cmd-h{display:flex;justify-content:space-between;align-items:center;padding:6px 12px;background:#F1EFE8;font-size:13px;font-weight:500}
+.cmd pre{margin:0;padding:12px;background:#fbfaf7;font-size:12.5px;line-height:1.7}
+.btn.mini{font-size:12px;padding:2px 10px}
+table.info td{padding:6px 10px}
+</style>
+<div class="card">
+  <h2>真机操作手册：MY-4F-JF-AC 接入 SharkSSO</h2>
+  <p class="muted">以下命令按真机当前配置（V600R024C10SPC500）生成，IP / 密钥 / VLAN 均为实值，可整段复制到真机执行。<b>现有 6 个 PSK SSID 全程不动，验证通过后再切生产。</b></p>
+
+  <h2 style="font-size:14px;margin-top:18px;">真机档案（自动读取）</h2>
+  <table class="info">
+    <tr><td class="muted">设备</td><td>MY-4F-JF-AC（华为 AC，V600R024C10SPC500）</td></tr>
+    <tr><td class="muted">RADIUS 源 IP</td><td><b>{{ ac_ip }}</b>（Vlanif10，capwap source 同接口）</td></tr>
+    <tr><td class="muted">RADIUS 服务器</td><td>10.10.0.41 · 认证 1812 · 计费 1813</td></tr>
+    <tr><td class="muted">独立密钥</td><td><code>{{ ac_secret }}</code></td></tr>
+    <tr><td class="muted">默认路由</td><td>0.0.0.0/0 → 172.16.1.254</td></tr>
+  </table>
+
+  <h2 style="font-size:14px;margin-top:18px;">现有 SSID / VLAN（切生产时对照用）</h2>
+  <table>
+    <tr><th>SSID</th><th>业务 VLAN</th><th>现状</th><th>处理方式</th></tr>
+    <tr><td>MY_Office</td><td>20</td><td>PSK</td><td>第 2 批切 802.1X</td></tr>
+    <tr><td>MY_Work</td><td>30</td><td>PSK</td><td>第 2 批切 802.1X</td></tr>
+    <tr><td>my_robotics</td><td>100</td><td>PSK</td><td>暂留（设备不支持 802.1X）</td></tr>
+    <tr><td>MoyingRobotics</td><td>89</td><td>PSK</td><td>暂留</td></tr>
+    <tr><td>MY_Experiment</td><td>22</td><td>PSK</td><td>暂留</td></tr>
+    <tr><td>MY_Attendance</td><td>21</td><td>PSK · ap-group kaoqinji</td><td>暂留（后续 MAC 认证）</td></tr>
+  </table>
+  <p class="muted">已有 VLAN：10 · 20-23 · 30 · 60 · 80 · 89 · 99 · 100 · 250 · 802。动态 VLAN 只能下发这些号，99 为未匹配兜底段。</p>
+</div>
+
+<div class="card">
+  <h2>阶段 0：连通性（不通后面全白搭）</h2>
+  <div class="cmd">
+    <div class="cmd-h"><span>用户视图执行，-a 指定源 IP 模拟真实认证报文</span><button class="btn gray mini" onclick="cp(this)">复制</button></div>
+<pre>ping -a {{ ac_ip }} 10.10.0.41</pre>
+  </div>
+  <p class="muted" style="margin-top:8px;">不通 → 到核心 172.16.1.254 上补路由：去 10.10.0.0/16 的路由已存在则查回程（10.10.0.41 网关必须能回 172.16.1.0/24）。</p>
+</div>
+
+<div class="card">
+  <h2>阶段 1：RADIUS 对接（新增，不影响现有用户）</h2>
+  <div class="cmd">
+    <div class="cmd-h"><span>system-view 后整段粘贴</span><button class="btn gray mini" onclick="cp(this)">复制</button></div>
+<pre>radius-server template sharksso
+ radius-server authentication 10.10.0.41 1812
+ radius-server accounting 10.10.0.41 1813
+ radius-server shared-key cipher {{ ac_secret }}
+ radius-server retransmit 3
+ radius-server source interface Vlanif10
+quit
+aaa
+ authentication-scheme sharksso
+  authentication-mode radius
+ quit
+ accounting-scheme sharksso_acc
+  accounting-mode radius
+  accounting start-fail online
+ quit
+ domain sharksso
+  authentication-scheme sharksso
+  accounting-scheme sharksso_acc
+  radius-server sharksso
+ quit
+quit
+dot1x-access-profile name dot1x_access_profile
+ dot1x authentication-method eap
+quit
+authentication-profile name dot1x_authen_profile
+ dot1x-access-profile dot1x_access_profile
+ access-domain sharksso
+quit
+security-profile name MY_1x
+ security wpa2 dot1x aes
+quit</pre>
+  </div>
+  <p class="muted" style="margin-top:8px;">EAP 中继模式：AC 不碰密码，校验全在 RADIUS（与 LDAP 方案匹配）。shared-key 已自动填入本机密钥。</p>
+</div>
+
+<div class="card">
+  <h2>阶段 2：试验 SSID（MY-Dot1x-Test）</h2>
+  <div class="cmd">
+    <div class="cmd-h"><span>业务 VLAN 99 只做兜底，认证成功后被 RADIUS 下发值覆盖</span><button class="btn gray mini" onclick="cp(this)">复制</button></div>
+<pre>ssid-profile name MY_Dot1x_Test
+ ssid MY-Dot1x-Test
+quit
+vap-profile name MY_Dot1x_Test
+ service-vlan vlan-id 99
+ ssid-profile MY_Dot1x_Test
+ security-profile MY_1x
+ authentication-profile dot1x_authen_profile
+ dynamic-vlan enable
+quit
+ap-group name default
+ radio 0
+  vap-profile MY_Dot1x_Test wlan 6
+ quit
+ radio 1
+  vap-profile MY_Dot1x_Test wlan 6
+ quit
+ radio 2
+  vap-profile MY_Dot1x_Test wlan 6
+ quit
+quit
+quit
+save
+y</pre>
+  </div>
+  <p class="muted" style="margin-top:8px;">wlan 6 是 default 组里未占用的编号；<code>dynamic-vlan enable</code> 若报命令不存在说明该版本不支持无线动态 VLAN，用户会留在 99。</p>
+</div>
+
+<div class="card">
+  <h2>阶段 3：验证（三层逐段来）</h2>
+  <ol style="line-height:2;">
+    <li><b>服务器侧</b>：「认证测试」页输入 <code>sim8021x / SimUser@Example1</code> → Accept（跳过 AC 单测 RADIUS）。</li>
+    <li><b>AC 侧</b>：用户视图执行下面命令 → 回复 Radius Authentication reply : OK。</li>
+    <li><b>真终端</b>：手机连 MY-Dot1x-Test 输同账号 → 拿到 <b>20 段</b> IP = 动态 VLAN 生效；没配 VLAN 的账号会落 99 段 = 兜底生效。</li>
+  </ol>
+  <div class="cmd">
+    <div class="cmd-h"><span>AC 上测 RADIUS 全链路</span><button class="btn gray mini" onclick="cp(this)">复制</button></div>
+<pre>test-aaa sim8021x SimUser@Example1 radius-template sharksso</pre>
+  </div>
+  <div class="cmd">
+    <div class="cmd-h"><span>看在线用户的 VLAN / IP（真终端连上后执行）</span><button class="btn gray mini" onclick="cp(this)">复制</button></div>
+<pre>display access-user username sim8021x verbose</pre>
+  </div>
+</div>
+
+<div class="card">
+  <h2>阶段 4：生产切换（验证通过后再做）</h2>
+  <p>先切 MY_Office（20），稳定一天再切 MY_Work（30）。模板原地改，AP 自动跟随，无需碰 ap-group：</p>
+  <div class="cmd">
+    <div class="cmd-h"><span>切 MY_Office 为 802.1X</span><button class="btn gray mini" onclick="cp(this)">复制</button></div>
+<pre>system-view
+vap-profile name MY_Office
+ security-profile MY_1x
+ authentication-profile dot1x_authen_profile
+ dynamic-vlan enable
+quit
+quit
+save
+y</pre>
+  </div>
+  <p class="muted" style="margin-top:8px;">切换后：员工连 MY_Office 会弹账号密码框（LDAP 账号 / 密码），所属部门对应 VLAN 自动下发；机器人、考勤机等 4 个 SSID 继续走 PSK 不受影响。<b>前提：</b>「动态 VLAN」页已把部门映射到已有 VLAN 号并保存。</p>
+</div>
+
+<div class="card">
+  <h2>真机排障对照表</h2>
+  <table>
+    <tr><th>现象</th><th>原因 / 处理</th></tr>
+    <tr><td>ping -a 不通</td><td>172.16.1.254 或 10.10.0.41 网关缺回程路由</td></tr>
+    <tr><td>test-aaa 超时</td><td>源 IP 不对（确认 radius-server source interface Vlanif10）；密钥不一致；核对「密钥管理」页 IP 必须是 172.16.1.253</td></tr>
+    <tr><td>test-aaa Reject</td><td>users 文件改后没 restart；账号密码错；「认证测试」页先单测排除 AC 因素</td></tr>
+    <tr><td>认证通过但 IP 在 99 段</td><td>RADIUS 没下发 VLAN：账号没配 VLAN 或部门没在「动态 VLAN」页映射 —— 属正常兜底，不是故障</td></tr>
+    <tr><td>认证通过但拿不到 IP</td><td>AP 接入交换机 trunk 没放行下发的 VLAN（AC 上联 GE0/0/1 已放行 2-4094，不用动）</td></tr>
+    <tr><td>dynamic-vlan enable 不存在</td><td>版本不支持无线动态 VLAN，RADIUS 下发值会被忽略，用户固定在业务 VLAN</td></tr>
+  </table>
+</div>
+
+<div class="card">
+  <h2>附：有线侧（交换机 802.1X / MAC 认证）要点</h2>
+  <ul style="line-height:1.9;">
+    <li>接入端口动态 VLAN 必须 <code>port link-type hybrid</code> + <code>dot1x enable</code>；</li>
+    <li>打印机 / IoT 走 MAC 认证：<code>mac-authentication enable</code>，账号 = MAC 地址（<code>00-11-22-33-44-55</code> 格式）在「账号管理」建同名账号；</li>
+    <li>交换机侧验证：<code>display dot1x interface g0/0/1</code>（Authorized）、<code>display access-user username xxx verbose</code>（下发 VLAN）。</li>
+  </ul>
+</div>
+
+<script>
+function cp(btn){
+  var t = btn.closest('.cmd').querySelector('pre').innerText;
+  navigator.clipboard.writeText(t).then(function(){
+    btn.textContent = '已复制';
+    setTimeout(function(){ btn.textContent = '复制'; }, 1200);
+  });
+}
+</script>
+{% endblock %}

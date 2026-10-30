@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card">
+  <h2>日志文件</h2>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
+    {% for l in logs %}
+    <a class="btn sm {{ 'gray' if l.name==name else '' }}"
+       href="{{ url_for('logs_page', name=l.name) }}">{{ l.name }}</a>
+    {% endfor %}
+  </div>
+  {% if name %}
+  <p class="muted">显示最后 8KB。<b>{{ name }}</b></p>
+  <pre>{{ content if content else '（文件为空）' }}</pre>
+  {% else %}
+  <p class="muted">暂无日志文件。容器运行日志请在服务器上执行：
+  <code>cd /opt/SharkSSO/radius && docker compose logs -f</code></p>
+  {% endif %}
+</div>
+{% endblock %}

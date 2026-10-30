@@ -1,0 +1,14 @@
+testuser	Cleartext-Password := "TestUser@Example1"
+	Reply-Message = "Hello from SharkSSO"
+
+# 模拟场景：802.1X 测试账号（本地明文密码，可跑 PEAP-MSCHAPv2）
+sim8021x	Cleartext-Password := "SimUser@Example1"
+	Reply-Message = "SharkSSO 802.1X OK",
+	Tunnel-Type = VLAN,
+	Tunnel-Medium-Type = IEEE-802,
+	Tunnel-Private-Group-Id = "20"
+
+simguest	Cleartext-Password := "GuestUser@Example1"
+	Tunnel-Type = VLAN,
+	Tunnel-Medium-Type = IEEE-802,
+	Tunnel-Private-Group-Id = "99"

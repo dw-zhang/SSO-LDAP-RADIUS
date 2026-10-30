@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="grid">
+  <div class="card kv"><div class="k">账号数（users 文件）</div><div class="v">{{ users|length }}</div></div>
+  <div class="card kv"><div class="k">设备密钥数</div><div class="v">{{ clients|length }}</div></div>
+  <div class="card kv">
+    <div class="k">RADIUS 服务状态（testuser 试认证）</div>
+    <div class="v" style="color:{{ 'var(--green)' if svc.accept else 'var(--red)' }};">
+      {{ '正常' if svc.accept else '异常' }}
+    </div>
+  </div>
+  <div class="card kv"><div class="k">当前时间</div><div class="v" style="font-size:15px;">{{ now }}</div></div>
+</div>
+
+<div class="card">
+  <h2>快速上手</h2>
+  <ol style="line-height:2;">
+    <li><b>加账号</b>：「账号管理」→ 填用户名/密码，可勾选动态 VLAN（认证通过后交换机把端口划入该 VLAN）。</li>
+    <li><b>加交换机/AC</b>：「密钥管理」→ 一台设备一条记录、一把独立密钥，密钥留空自动生成随机值，同步填到设备侧 shared-key。</li>
+    <li><b>验证</b>：「认证测试」→ 输入账号密码直接测，即时看到 Accept/Reject 和回包属性。</li>
+    <li><b>对接设备</b>：「对接指南」→ 华为 802.1X / 动态 VLAN / MAC 认证配置模板，直接照抄。</li>
+  </ol>
+  <p class="muted">注意：网页上做的修改实时写入配置文件，但需要执行 <code>cd /opt/SharkSSO/radius && docker compose restart</code> 后才对认证生效（页面操作后会有黄色提醒）。</p>
+</div>
+
+<div class="card">
+  <h2>日志文件（{{ logs|length }}）</h2>
+  {% if logs %}
+  <table><tr><th>文件</th><th>大小</th><th>最后修改</th><th></th></tr>
+  {% for l in logs %}
+    <tr><td>{{ l.name }}</td><td>{{ (l.size/1024)|round(1) }} KB</td><td>{{ l.mtime }}</td>
+        <td><a class="btn sm gray" href="{{ url_for('logs_page', name=l.name) }}">查看</a></td></tr>
+  {% endfor %}</table>
+  {% else %}
+  <p class="muted">暂无日志文件。容器运行日志在服务器上执行 <code>docker compose logs -f</code> 查看。</p>
+  {% endif %}
+</div>
+{% endblock %}

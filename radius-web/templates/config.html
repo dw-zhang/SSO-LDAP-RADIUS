@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card">
+  <h2>共享密钥（每台设备独立）</h2>
+  <p class="muted">每台交换机 / AC / AP 一把独立密钥，互不影响，避免一台泄露全局遭殃。
+     设备侧配置 <code>radius-server shared-key cipher</code> 时填对应设备的密钥，两边必须完全一致 ——
+     不一致的表观是「认证超时 / 无响应」（报文被丢弃），不是 Reject。</p>
+  <table>
+    <tr><th>NAS 名称</th><th>IP / 网段</th><th>独立密钥</th></tr>
+    {% for r in secret_rows %}
+    <tr>
+      <td><b>{{ r.name }}</b>{% if r.name == 'localhost' %} <span class="muted">（本机自测，设备不用）</span>{% endif %}</td>
+      <td>{{ r.ip }}</td>
+      <td><code>{{ r.secret }}</code></td>
+    </tr>
+    {% endfor %}
+  </table>
+  <p class="muted" style="margin-top:10px;">添加新设备 / 换密钥：去「密钥管理」页操作，密钥留空会自动生成独立随机值。</p>
+</div>
+
+<div class="card">
+  <h2>users（账号配置原文）</h2>
+  <pre>{{ users_raw }}</pre>
+  <p class="muted">改动请去「账号管理」页操作；此处为只读展示。手工改完同样需要重启 RADIUS。</p>
+</div>
+
+<div class="card">
+  <h2>clients.conf（设备密钥原文）</h2>
+  <pre>{{ clients_raw }}</pre>
+</div>
+{% endblock %}

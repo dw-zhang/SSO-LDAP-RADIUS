@@ -1,0 +1,420 @@
+{
+  "rules": [
+    {
+      "group": "ceshi",
+      "label": "测试",
+      "vlan": "",
+      "enabled": false
+    },
+    {
+      "group": "guwenbu",
+      "label": "顾问部",
+      "vlan": "",
+      "enabled": false
+    },
+    {
+      "group": "pingtaizu",
+      "label": "平台组",
+      "vlan": "",
+      "enabled": false
+    },
+    {
+      "group": "shengchanbu",
+      "label": "生产部",
+      "vlan": "",
+      "enabled": false
+    },
+    {
+      "group": "jixiezu",
+      "label": "机械组",
+      "vlan": "",
+      "enabled": false
+    },
+    {
+      "group": "zhongxinfuzeren",
+      "label": "中心负责人",
+      "vlan": "",
+      "enabled": false
+    },
+    {
+      "group": "jiaofuyunwei1zu",
+      "label": "交付运维1组",
+      "vlan": "",
+      "enabled": false
+    },
+    {
+      "group": "ceshibu",
+      "label": "测试部",
+      "vlan": "",
+      "enabled": false
+    },
+    {
+      "group": "chanpinbu",
+      "label": "产品部",
+      "vlan": "",
+      "enabled": false
+    },
+    {
+      "group": "diyizhanqu",
+      "label": "第一战区",
+      "vlan": "",
+      "enabled": false
+    },
+    {
+      "group": "jiaofuyunwei2zu",
+      "label": "交付运维2组",
+      "vlan": "",
+      "enabled": false
+    },
+    {
+      "group": "jiaofuyunwei3zu",
+      "label": "交付运维3组",
+      "vlan": "",
+      "enabled": false
+    },
+    {
+      "group": "jiaofuyunwei4zu",
+      "label": "交付运维4组",
+      "vlan": "",
+      "enabled": false
+    },
+    {
+      "group": "xiaoshoubu",
+      "label": "销售部",
+      "vlan": "",
+      "enabled": false
+    },
+    {
+      "group": "xitongzu",
+      "label": "系统组",
+      "vlan": "",
+      "enabled": false
+    },
+    {
+      "group": "yingjianyanfayibu",
+      "label": "硬件研发一部",
+      "vlan": "",
+      "enabled": false
+    },
+    {
+      "group": "caiwubu",
+      "label": "财务部",
+      "vlan": "",
+      "enabled": false
+    },
+    {
+      "group": "AIchuangxinzhongxin",
+      "label": "AI创新中心",
+      "vlan": "",
+      "enabled": false
+    },
+    {
+      "group": "ruanjianshishizu",
+      "label": "软件实施组",
+      "vlan": "",
+      "enabled": false
+    },
+    {
+      "group": "suanfazu",
+      "label": "算法组",
+      "vlan": "",
+      "enabled": false
+    },
+    {
+      "group": "caigouzhongxin",
+      "label": "采购中心",
+      "vlan": "",
+      "enabled": false
+    },
+    {
+      "group": "renlibu",
+      "label": "人力部",
+      "vlan": "",
+      "enabled": false
+    },
+    {
+      "group": "wukongbu",
+      "label": "物控部",
+      "vlan": "",
+      "enabled": false
+    },
+    {
+      "group": "yanfaguanlibu",
+      "label": "研发管理部",
+      "vlan": "",
+      "enabled": false
+    },
+    {
+      "group": "gonggongguanxibu",
+      "label": "公共关系部",
+      "vlan": "",
+      "enabled": false
+    },
+    {
+      "group": "hezuozhongxin",
+      "label": "合作中心",
+      "vlan": "",
+      "enabled": false
+    },
+    {
+      "group": "xingzhengbu",
+      "label": "行政部",
+      "vlan": "",
+      "enabled": false
+    },
+    {
+      "group": "yingjianyanfaerbu",
+      "label": "硬件研发二部",
+      "vlan": "",
+      "enabled": false
+    },
+    {
+      "group": "CEObangongshi",
+      "label": "CEO办公室",
+      "vlan": "",
+      "enabled": false
+    },
+    {
+      "group": "Xjishuzu",
+      "label": "X技术组",
+      "vlan": "",
+      "enabled": false
+    },
+    {
+      "group": "caigoubu",
+      "label": "采购部",
+      "vlan": "",
+      "enabled": false
+    },
+    {
+      "group": "cangchubu",
+      "label": "仓储部",
+      "vlan": "",
+      "enabled": false
+    },
+    {
+      "group": "dianqizu",
+      "label": "电气组",
+      "vlan": "",
+      "enabled": false
+    },
+    {
+      "group": "dongshihui",
+      "label": "董事会",
+      "vlan": "",
+      "enabled": false
+    },
+    {
+      "group": "jiaofuyunweibu",
+      "label": "交付运维部",
+      "vlan": "",
+      "enabled": false
+    },
+    {
+      "group": "maanshangongsi",
+      "label": "马鞍山公司",
+      "vlan": "",
+      "enabled": false
+    },
+    {
+      "group": "moyingkeji(nanjing)youxiangongsi",
+      "label": "墨影科技(南京)有限公司",
+      "vlan": "",
+      "enabled": false
+    },
+    {
+      "group": "pinzhibu",
+      "label": "品质部",
+      "vlan": "",
+      "enabled": false
+    },
+    {
+      "group": "renliziyuanbu",
+      "label": "人力资源部",
+      "vlan": "",
+      "enabled": false
+    },
+    {
+      "group": "shangwubu",
+      "label": "商务部",
+      "vlan": "",
+      "enabled": false
+    },
+    {
+      "group": "shenjibu",
+      "label": "审计部",
+      "vlan": "",
+      "enabled": false
+    },
+    {
+      "group": "shichangbu",
+      "label": "市场部",
+      "vlan": "",
+      "enabled": false
+    },
+    {
+      "group": "zongjingban",
+      "label": "总经办",
+      "vlan": "",
+      "enabled": false
+    },
+    {
+      "group": "caiwuzhongxin",
+      "label": "财务中心",
+      "vlan": "",
+      "enabled": false
+    },
+    {
+      "group": "dierzhanqu",
+      "label": "第二战区",
+      "vlan": "",
+      "enabled": false
+    },
+    {
+      "group": "fawubu",
+      "label": "法务部",
+      "vlan": "",
+      "enabled": false
+    },
+    {
+      "group": "gongchengjishuzhongxin",
+      "label": "工程技术中心",
+      "vlan": "",
+      "enabled": false
+    },
+    {
+      "group": "jituanfenguanbumen",
+      "label": "集团分管部门",
+      "vlan": "",
+      "enabled": false
+    },
+    {
+      "group": "renlixingzhengzhongxin",
+      "label": "人力行政中心",
+      "vlan": "",
+      "enabled": false
+    },
+    {
+      "group": "ruanjianyanfabu",
+      "label": "软件研发部",
+      "vlan": "",
+      "enabled": false
+    },
+    {
+      "group": "shenzhenmoyaozhineng",
+      "label": "深圳墨曜智能",
+      "vlan": "",
+      "enabled": false
+    },
+    {
+      "group": "shouhoujishuzhichizu",
+      "label": "售后技术支持组",
+      "vlan": "",
+      "enabled": false
+    },
+    {
+      "group": "tixibu",
+      "label": "体系部",
+      "vlan": "",
+      "enabled": false
+    },
+    {
+      "group": "tourongzibu",
+      "label": "投融资部",
+      "vlan": "",
+      "enabled": false
+    },
+    {
+      "group": "xinxibu",
+      "label": "信息部",
+      "vlan": "",
+      "enabled": false
+    },
+    {
+      "group": "yanfazhongxin",
+      "label": "研发中心",
+      "vlan": "",
+      "enabled": false
+    },
+    {
+      "group": "yewuzhongxin",
+      "label": "业务中心",
+      "vlan": "",
+      "enabled": false
+    },
+    {
+      "group": "yingjianyanfasanbu",
+      "label": "硬件研发三部",
+      "vlan": "",
+      "enabled": false
+    },
+    {
+      "group": "yingxiaozhongxin",
+      "label": "营销中心",
+      "vlan": "",
+      "enabled": false
+    },
+    {
+      "group": "yingyongyanfabu",
+      "label": "应用研发部",
+      "vlan": "",
+      "enabled": false
+    },
+    {
+      "group": "zhiliangguanlizhongxin",
+      "label": "质量管理中心",
+      "vlan": "",
+      "enabled": false
+    },
+    {
+      "group": "zhizaozhongxin",
+      "label": "制造中心",
+      "vlan": "",
+      "enabled": false
+    },
+    {
+      "group": "zigongsi",
+      "label": "子公司",
+      "vlan": "",
+      "enabled": false
+    },
+    {
+      "group": "zongjingli",
+      "label": "总经理",
+      "vlan": "",
+      "enabled": false
+    },
+    {
+      "group": "dianzibu",
+      "label": "电子部",
+      "vlan": "",
+      "enabled": false
+    },
+    {
+      "group": "gongchengbu",
+      "label": "工程部",
+      "vlan": "",
+      "enabled": false
+    },
+    {
+      "group": "jiegoubu",
+      "label": "结构部",
+      "vlan": "",
+      "enabled": false
+    },
+    {
+      "group": "nanjinggongsi",
+      "label": "南京公司",
+      "vlan": "",
+      "enabled": false
+    },
+    {
+      "group": "zhejiangmoyuan",
+      "label": "浙江墨源",
+      "vlan": "",
+      "enabled": false
+    }
+  ],
+  "default_vlan": "",
+  "updated_at": "2026-10-28 11:29:22"
+}

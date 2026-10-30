@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+{% block title %}Portal 管理后台{% endblock %}
+{% block wrap_class %}wide{% endblock %}
+
+{% block content %}
+<header class="topbar">
+  <div>
+    <h1>Portal 管理后台</h1>
+    <p class="muted">在线会话、认证日志与运行配置</p>
+  </div>
+  <a class="btn ghost" href="{{ url_for('portal_page') }}" target="_blank">打开认证页</a>
+</header>
+
+<section class="stat-row">
+  <div class="stat">
+    <span class="stat-label">在线终端</span>
+    <strong>{{ stats.online }}</strong>
+  </div>
+  <div class="stat">
+    <span class="stat-label">24h 认证成功</span>
+    <strong>{{ stats.auth_ok }}</strong>
+  </div>
+  <div class="stat">
+    <span class="stat-label">24h 认证失败</span>
+    <strong class="danger">{{ stats.auth_fail }}</strong>
+  </div>
+  <div class="stat">
+    <span class="stat-label">放行方式</span>
+    <strong class="small">{{ cfg_summary.mode }}</strong>
+  </div>
+</section>
+
+<section class="panel">
+  <div class="panel-head">
+    <h2>在线会话</h2>
+    <span class="muted mono">{{ cfg_summary.radius }} · {{ cfg_summary.ac }}</span>
+  </div>
+  {% if sessions %}
+  <table>
+    <thead>
+      <tr><th>账号</th><th>终端 IP</th><th>SSID</th><th>上线时间</th><th>到期时间</th><th></th></tr>
+    </thead>
+    <tbody>
+      {% for s in sessions %}
+      <tr>
+        <td><strong>{{ s.username }}</strong></td>
+        <td class="mono">{{ s.userip }}</td>
+        <td>{{ s.ssid or '-' }}</td>
+        <td class="mono">{{ s.started_at | ts }}</td>
+        <td class="mono">{{ s.expires_at | ts }}</td>
+        <td class="right">
+          <form method="post" action="{{ url_for('admin_kick') }}"
+                onsubmit="return confirm('确认踢下线 {{ s.username }}？');">
+            <input type="hidden" name="session_id" value="{{ s.session_id }}">
+            <input type="hidden" name="userip" value="{{ s.userip }}">
+            <button class="btn danger sm" type="submit">踢下线</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="empty">当前没有在线终端</p>
+  {% endif %}
+</section>
+
+<section class="panel">
+  <div class="panel-head">
+    <h2>认证日志</h2>
+    <form method="get" class="search">
+      <input type="search" name="q" value="{{ keyword }}" placeholder="搜索账号或 IP">
+      <button class="btn sm" type="submit">搜索</button>
+    </form>
+  </div>
+  {% if logs %}
+  <table>
+    <thead>
+      <tr><th>时间</th><th>账号</th><th>终端 IP</th><th>动作</th><th>结果</th><th>详情</th></tr>
+    </thead>
+    <tbody>
+      {% for l in logs %}
+      <tr>
+        <td class="mono nowrap">{{ l.ts | ts_full }}</td>
+        <td>{{ l.username or '-' }}</td>
+        <td class="mono">{{ l.userip or '-' }}</td>
+        <td><span class="tag">{{ l.action }}</span></td>
+        <td>
+          {% if l.result == 'OK' %}<span class="ok-text">成功</span>
+          {% else %}<span class="danger">失败</span>{% endif %}
+        </td>
+        <td class="detail">{{ l.detail }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="empty">暂无日志</p>
+  {% endif %}
+</section>
+
+<footer class="foot muted mono">
+  Portal UDP {{ cfg_summary.portal_udp }} · RADIUS {{ cfg_summary.radius }} · AC {{ cfg_summary.ac }}
+</footer>
+{% endblock %}

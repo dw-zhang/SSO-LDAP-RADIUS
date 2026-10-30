@@ -1,0 +1,96 @@
+# ============================================================
+# Portal 服务器配置（钉钉扫码 + RADIUS 动态 VLAN）
+# 所有带 CHANGE_ME 的项都必须按你的实际环境改掉
+# ============================================================
+
+portal:
+  # 认证页标题，可按公司名改
+  name: "鲨鱼网络 · 企业无线认证"
+
+  # Web 服务监听（给终端浏览器访问）
+  listen_ip: "0.0.0.0"
+  listen_port: 8085
+
+  # 华为 Portal 协议 UDP 端口（与 AC 对接，必须和 AC 侧 web-auth-server 的 port 一致）
+  protocol_port: 50100
+
+  # Portal 协议共享密钥（必须和 AC 上 web-auth-server 的 shared-key 完全一致）
+  shared_key: "CHANGE_ME_PORTAL_ADMIN_PW"
+
+  # 对外访问地址。钉钉扫码的回调地址必须与之匹配，
+  # 且必须在钉钉开放平台「登录与分享 - 回调域名」里登记过（通常要求备案域名，不能是 IP）
+  public_url: "http://10.10.0.41:8085"
+
+radius:
+  # FreeRADIUS 地址（与 Portal 同机部署时用 127.0.0.1）
+  host: "127.0.0.1"
+  auth_port: 1812
+  acct_port: 1813
+  # 必须和 RADIUS 侧 clients.conf 里 localhost 那条的 secret 一致
+  secret: "testing123"
+  timeout: 3
+  retries: 2
+
+  # ★ Portal 与 RADIUS 之间的授权通道令牌
+  # 身份已由钉钉核验，Portal 用「用户名 + 这个令牌」向 RADIUS 请求授权，
+  # RADIUS 侧看到令牌就跳过密码校验，只做「部门 -> VLAN」的判定并回 Tunnel 属性。
+  # 改这里必须同步改 RADIUS 的 site-default（见 README）
+  portal_token: "CHANGE_ME_PORTAL_TOKEN"
+
+ac:
+  # 华为 AC 的地址（作为 NAS-IP-Address 上报给 RADIUS）
+  nas_ip: "10.10.0.41"
+  # CoA 目标地址，留空则与 nas_ip 相同
+  coa_host: ""
+  # CoA 端口，RFC 5176 默认 3799
+  coa_port: 3799
+  # AC 上 radius-server authorization 里配的密钥
+  coa_secret: "CHANGE_ME_COA_SECRET"
+
+# ---------------- 钉钉扫码登录 ----------------
+dingtalk:
+  app_key: "CHANGE_ME_DINGTALK_APP_KEY"
+  app_secret: "CHANGE_ME_DINGTALK_APP_SECRET"
+  # 回调地址，必须与钉钉开放平台里登记的一致
+  redirect_uri: "http://10.10.0.41:8085/auth/dingtalk/callback"
+
+  # 联调模式：钉钉回调域名还没配好时，允许访问 /auth/dev?mobile=xxx 模拟扫码，
+  # 走完全相同的后续流程（LDAP 认人 -> RADIUS 判 VLAN -> 放行）。
+  # 正式上线务必改成 false
+  dev_mode: true
+
+# ---------------- LDAP（只当属性库，不校验密码） ----------------
+ldap:
+  uri: "ldap://127.0.0.1:389"
+  bind_dn: "cn=admin,dc=moying,dc=ai"
+  bind_pw: "CHANGE_ME_LDAP_ADMIN_PW"
+  people_base: "ou=people,dc=moying,dc=ai"
+  group_base: "ou=dingtalkroot,dc=moying,dc=ai"
+  timeout: 5
+
+auth:
+  # 登录方式：
+  #   dingtalk —— 只允许钉钉扫码（员工不需要记密码，推荐）
+  #   both     —— 钉钉扫码 + 账号密码并存（过渡期）
+  #   password —— 只有账号密码（旧行为）
+  mode: "dingtalk"
+
+  # 放行方式：
+  #   portal —— 只用华为 Portal 协议 AFF_ACK_AUTH（AC 原生认得，推荐）
+  #   coa    —— 只用 RFC 5176 CoA 下发授权（带 Tunnel 属性切 VLAN）
+  #   both   —— 两条都发，以 Portal 协议为主，CoA 兜底（首次联调建议用这个）
+  release_mode: "both"
+
+  # 会话有效期（秒），到期后自动踢下线
+  session_timeout: 28800
+
+  # 是否允许已在线用户重复登录（覆盖旧会话）
+  allow_relogin: true
+
+# 管理后台（HTTP Basic Auth）
+admin:
+  username: "admin"
+  password: "CHANGE_ME_PORTAL_ADMIN_PW"
+
+# 日志级别：DEBUG 会把每条 Portal 报文的十六进制 dump 出来，联调期建议 DEBUG
+log_level: "INFO"

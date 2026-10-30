@@ -1,0 +1,222 @@
+{% extends "base.html" %}
+{% block content %}
+{% set on_rows = rows | selectattr('enabled') | list %}
+{% set vlan_sum = on_rows | map(attribute='vlan') | unique | list %}
+
+<div class="card">
+  <h2>动态 VLAN 状态</h2>
+  <div class="grid">
+    <div class="kv"><div class="k">LDAP 部门</div><div class="v">{{ rows|length }}</div></div>
+    <div class="kv"><div class="k">启用规则</div><div class="v">{{ on_rows|length }}</div>
+      <div class="muted">占用 {{ vlan_sum|length }} 个 VLAN</div></div>
+    <div class="kv"><div class="k">site-default</div>
+      <div class="v" style="font-size:15px;margin-top:8px">
+        {% if applied %}<span class="pill g">已生成规则块</span>
+        {% else %}<span class="pill r">尚未生成</span>{% endif %}
+      </div></div>
+    <div class="kv"><div class="k">RADIUS 容器</div>
+      <div class="v" style="font-size:15px;margin-top:8px">
+        {% if container.running %}<span class="pill g">运行中</span>
+        {% else %}<span class="pill r">{{ container.detail }}</span>{% endif %}
+      </div></div>
+  </div>
+  <p class="muted" style="margin-top:12px">
+    原理：802.1X 认证时 RADIUS 从 LDAP 拿到用户所属部门组（<code>LDAP-Group</code>），
+    按下面的映射下发 <code>Tunnel-Private-Group-Id</code>，交换机据此把端口划进对应 VLAN。
+    改完点「保存」只写文件，点「保存并重启生效」才会加载；重启后若 RADIUS 起不来会自动回滚。
+  </p>
+  <p class="muted" style="margin-top:6px">
+    钉钉部门是树形的，LDAP 里同名部门可能在不同上级下各存一份，RADIUS 只能按组名匹配，
+    因此同名部门会合并成一条规则（表里标「合并 N 处」）。若两个真实不同的部门重名，
+    它们的成员会共用一个 VLAN —— 遇到这种情况要先在钉钉里改名区分。
+  </p>
+  {% if vlan_summary %}
+  <div style="margin-top:14px">
+    <div class="muted" style="margin-bottom:6px">VLAN 占用一览（同一 VLAN 下的部门会共用网段）</div>
+    {% for vlan, names in vlan_summary %}
+      <span class="pill v" style="margin:0 6px 6px 0">VLAN {{ vlan }} ← {{ names|join('、') }}</span>
+    {% endfor %}
+  </div>
+  {% endif %}
+  {% if not ldap_enabled %}
+  <div class="flash warn" style="margin-top:10px">
+    当前 RADIUS 未启用 LDAP 模式（还是本地 users 文件认证），下面的规则不会生效。
+    请先到 <a href="{{ url_for('ldap_page') }}">LDAP 对接</a> 页启用。
+  </div>
+  {% endif %}
+  {% if ldap_err %}
+  <div class="flash error" style="margin-top:10px">
+    读取 LDAP 部门列表失败：{{ ldap_err }}。表格里只显示已保存的规则，可用历史配置继续编辑。
+  </div>
+  {% endif %}
+</div>
+
+<div class="card">
+  <h2>部门 → VLAN 映射</h2>
+
+  <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:12px">
+    <div style="flex:1;min-width:200px">
+      <span class="muted">搜索部门（中文名 / 拼音组名）</span>
+      <input type="text" id="q" placeholder="例如：研发 / yanfa" autocomplete="off">
+    </div>
+    <div>
+      <span class="muted">批量设置 VLAN</span>
+      <div style="display:flex;gap:6px">
+        <input type="number" id="bulk_vlan" min="1" max="4094" placeholder="20"
+               style="width:100px">
+        <button type="button" class="btn gray sm" onclick="bulkApply()">应用到勾选行</button>
+      </div>
+    </div>
+    <div style="display:flex;gap:6px">
+      <button type="button" class="btn gray sm" onclick="checkAll(true)">全选</button>
+      <button type="button" class="btn gray sm" onclick="checkAll(false)">清空勾选</button>
+    </div>
+    <label style="display:flex;align-items:center;gap:6px;margin:0;cursor:pointer;white-space:nowrap">
+      <input type="checkbox" id="only_on" onchange="applyFilter()" style="width:auto">
+      <span class="muted">只看已启用</span>
+    </label>
+  </div>
+
+  <form method="post" action="{{ url_for('vlan_save') }}" id="f">
+    <input type="hidden" name="action" value="save" id="action_field">
+    <div style="max-height:520px;overflow:auto;border:1px solid var(--line);border-radius:8px">
+      <table id="tbl">
+        <thead>
+          <tr>
+            <th style="width:42px">启用</th>
+            <th>部门</th>
+            <th>组名（LDAP cn）</th>
+            <th style="width:70px">人数</th>
+            <th style="width:110px">VLAN</th>
+          </tr>
+        </thead>
+        <tbody>
+        {% for r in rows %}
+          <tr data-name="{{ (r.label ~ ' ' ~ r.group)|lower }}"
+              data-on="{{ '1' if r.enabled else '0' }}"
+              class="{{ 'stale' if r.stale else '' }}">
+            <td>
+              <input type="hidden" name="g" value="{{ r.group }}">
+              <input type="hidden" name="lbl" value="{{ r.label }}">
+              <input type="checkbox" name="en_{{ loop.index0 }}" value="1"
+                     style="width:16px;height:16px"
+                     {% if r.enabled %}checked{% endif %}
+                     onchange="syncEn(this)">
+            </td>
+            <td>
+              {{ r.label }}
+              {% if r.dups and r.dups > 1 %}<span class="pill" style="background:#e0e7ff;color:#3730a3"
+                title="LDAP 里这个部门名在 {{ r.dups }} 个上级节点下各存一份，RADIUS 只按组名匹配，已合并为一条规则">合并 {{ r.dups }} 处</span>{% endif %}
+              {% if r.stale %}<span class="pill r" title="LDAP 里已找不到该组，可能部门被删除或改名">已失联</span>{% endif %}
+            </td>
+            <td><code class="muted">{{ r.group }}</code></td>
+            <td class="muted">{{ r.members if r.members is not none else '—' }}</td>
+            <td>
+              <input type="number" name="vlan_{{ loop.index0 }}" min="1" max="4094"
+                     value="{{ r.vlan }}" placeholder="—"
+                     style="width:92px" oninput="syncVlan(this)">
+            </td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="grid" style="margin-top:14px;align-items:end">
+      <div>
+        <span class="muted">兜底 VLAN（可选）</span>
+        <input type="number" name="default_vlan" min="1" max="4094"
+               value="{{ cfg.default_vlan }}" placeholder="留空 = 不启用">
+        <p class="muted" style="margin-top:6px">
+          命中不了任何部门规则的 LDAP 账号会拿到这个 VLAN，典型用法：填一个只能上网的隔离 VLAN，
+          避免未分类人员落到默认网段。</p>
+      </div>
+      <div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button type="submit" class="btn" onclick="document.getElementById('action_field').value='save'">
+            保存（不重启）</button>
+          <button type="submit" class="btn green" onclick="document.getElementById('action_field').value='apply'">
+            保存并重启生效</button>
+        </div>
+        <p class="muted" style="margin-top:6px">
+          保存会先备份 site-default 到 <code>raddb/.backups/</code>。
+          上次保存：{{ cfg.updated_at or '从未' }}</p>
+      </div>
+    </div>
+  </form>
+</div>
+
+<div class="card">
+  <h2>生成结果预览</h2>
+  <p class="muted">下面就是即将写入 <code>site-default</code>（authorize 段）的内容，可用「配置文件」页核对。
+     顺序即优先级：自上而下，先命中的部门生效。</p>
+  <pre style="max-height:320px;overflow:auto">{{ preview }}</pre>
+</div>
+
+{% if active_text and active_text.strip() != preview.strip() %}
+<div class="card">
+  <h2>当前已生效（与待保存内容不同）</h2>
+  <pre style="max-height:280px;overflow:auto">{{ active_text }}</pre>
+</div>
+{% endif %}
+
+<style>
+  #tbl thead th { position:sticky; top:0; background:#fff; z-index:1;
+                  box-shadow:inset 0 -1px 0 var(--line); }
+  #tbl tbody tr:hover { background:#f9fafb; }
+  #tbl tr.stale td { background:#fff7ed; }
+  #tbl td { vertical-align:middle; }
+</style>
+
+<script>
+function syncEn(cb) {
+  var tr = cb.closest('tr');
+  tr.dataset.on = cb.checked ? '1' : '0';
+  if (cb.checked) {
+    var v = tr.querySelector('input[type=number]');
+    if (!v.value) { v.focus(); }
+  }
+}
+function syncVlan(inp) {
+  var tr = inp.closest('tr');
+  var cb = tr.querySelector('input[type=checkbox]');
+  if (inp.value) { cb.checked = true; tr.dataset.on = '1'; }
+}
+function checkAll(flag) {
+  document.querySelectorAll('#tbl tbody tr').forEach(function (tr) {
+    if (tr.style.display === 'none') return;
+    var cb = tr.querySelector('input[type=checkbox]');
+    cb.checked = flag;
+    tr.dataset.on = flag ? '1' : '0';
+  });
+  applyFilter();
+}
+function bulkApply() {
+  var v = document.getElementById('bulk_vlan').value.trim();
+  if (!v) { alert('先填一个 VLAN 号'); return; }
+  var n = 0;
+  document.querySelectorAll('#tbl tbody tr').forEach(function (tr) {
+    if (tr.style.display === 'none') return;
+    tr.querySelector('input[type=number]').value = v;
+    tr.querySelector('input[type=checkbox]').checked = true;
+    tr.dataset.on = '1';
+    n++;
+  });
+  applyFilter();
+  alert('已把 VLAN ' + v + ' 应用到 ' + n + ' 个可见部门（记得点保存）');
+}
+function applyFilter() {
+  var q = document.getElementById('q').value.trim().toLowerCase();
+  var onlyOn = document.getElementById('only_on').checked;
+  var shown = 0;
+  document.querySelectorAll('#tbl tbody tr').forEach(function (tr) {
+    var ok = true;
+    if (q && tr.dataset.name.indexOf(q) === -1) ok = false;
+    if (onlyOn && tr.dataset.on !== '1') ok = false;
+    tr.style.display = ok ? '' : 'none';
+    if (ok) shown++;
+  });
+}
+document.getElementById('q').addEventListener('input', applyFilter);
+</script>
+{% endblock %}

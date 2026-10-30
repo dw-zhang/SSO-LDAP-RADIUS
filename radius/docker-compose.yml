@@ -1,0 +1,18 @@
+services:
+  radius:
+    image: freeradius/freeradius-server:3.2-alpine
+    container_name: sharksso-radius
+    restart: always
+    network_mode: host
+    command: ["freeradius", "-f"]
+    volumes:
+      - ./raddb/clients.conf:/etc/raddb/clients.conf
+      - ./raddb/users:/etc/raddb/mods-config/files/authorize
+      - ./raddb/ldap-mod.conf:/opt/etc/raddb/mods-enabled/ldap   # LDAP 接通后放开
+      - ./raddb/site-default:/opt/etc/raddb/sites-enabled/default  # LDAP 接通后放开
+      - ./logs:/var/log/radius
+    logging:
+      driver: json-file
+      options:
+        max-size: "20m"
+        max-file: "5"

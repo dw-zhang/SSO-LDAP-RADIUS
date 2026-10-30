@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card" style="max-width:560px;">
+  <h2>编辑账号：{{ e.name }}</h2>
+  <form method="post">
+    <label>用户名（不可修改，如需改名请删除重建）</label>
+    <input type="text" value="{{ e.name }}" disabled>
+
+    <label>密码</label>
+    <input type="text" name="password" value="{{ password }}">
+
+    <div style="margin-top:12px;">
+      <label style="display:inline-flex;align-items:center;gap:6px;color:var(--txt);">
+        <input type="checkbox" name="enable_vlan" style="width:auto;" {{ 'checked' if has_vlan }}> 启用动态 VLAN
+      </label>
+      <input type="number" name="vlan" value="{{ vlan }}" placeholder="VLAN 号"
+             style="width:160px;margin-left:8px;">
+    </div>
+
+    <label>欢迎消息（Reply-Message，可选）</label>
+    <input type="text" name="reply_message"
+           value="{% for a,op,v in e.reply %}{% if a=='Reply-Message' %}{{ v|replace('"','') }}{% endif %}{% endfor %}">
+
+    {% if e.checks or e.reply %}
+    <label>当前完整配置（只读参考）</label>
+    <pre>{% for a,op,v in e.checks %}{{ a }} {{ op }} {{ v }}
+{% endfor %}{% for a,op,v in e.reply %}{{ a }} {{ op }} {{ v }}
+{% endfor %}</pre>
+    {% endif %}
+
+    <div style="margin-top:14px;">
+      <button class="btn">保存</button>
+      <a class="btn gray" href="{{ url_for('users_page') }}">取消</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

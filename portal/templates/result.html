@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}{{ title }}{% endblock %}
+{% block wrap_class %}narrow{% endblock %}
+
+{% block content %}
+<div class="card center">
+  <div class="badge {{ 'ok' if ok else 'fail' }}">
+    {% if ok %}&#10003;{% else %}&#10005;{% endif %}
+  </div>
+
+  <h1>{{ title }}</h1>
+  <p class="lead">{{ message }}</p>
+  {% if detail %}<p class="muted mono">{{ detail }}</p>{% endif %}
+
+  {% if ok and continue_url %}
+  <a class="primary" href="{{ continue_url }}">继续访问原网页</a>
+  {% endif %}
+
+  {% if not ok %}
+  <a class="primary ghost" href="{{ back_url }}">返回重试</a>
+  {% else %}
+  <a class="primary ghost" href="{{ back_url }}">完成</a>
+  {% endif %}
+
+  {% if userip %}<p class="hint">终端 IP：{{ userip }}</p>{% endif %}
+</div>
+
+{% if ok and continue_url %}
+<script>setTimeout(function(){ location.href = {{ continue_url | tojson }}; }, 1500);</script>
+{% endif %}
+{% endblock %}
